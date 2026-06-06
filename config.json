@@ -1,0 +1,32 @@
+{
+  "RETRIEVER": "duckduckgo",
+  "FAST_LLM": "openai:glm-4.5-air",
+  "SMART_LLM": "openai:glm-5.1",
+  "STRATEGIC_LLM": "openai:glm-5.1",
+  "LANGUAGE": "chinese",
+  "REPORT_FORMAT": "APA",
+  "TOTAL_WORDS": 3000,
+  "MCP_STRATEGY": "fast",
+  "MCP_SERVERS": [
+    {
+      "name": "web-search-prime",
+      "description": "智谱联网搜索（整合5家搜索引擎）",
+      "connection_url": "https://open.bigmodel.cn/api/mcp/web_search_prime/mcp",
+      "connection_type": "streamable_http",
+      "connection_headers": {
+        "Authorization": "Bearer ${OPENAI_API_KEY}"
+      },
+      "enabled": true
+    },
+    {
+      "name": "web-reader",
+      "description": "智谱网页读取（获取网页全文内容）",
+      "connection_url": "https://open.bigmodel.cn/api/mcp/web_reader/mcp",
+      "connection_type": "streamable_http",
+      "connection_headers": {
+        "Authorization": "Bearer ${OPENAI_API_KEY}"
+      },
+      "enabled": true
+    }
+  ]
+}

@@ -2170,6 +2170,72 @@ footer a:hover {
     background-color: #f8f9fa;
 }
 
+.mcp-server-list-group {
+    margin-bottom: 12px;
+    color: #333;
+}
+
+.mcp-server-list-group label,
+.mcp-server-list-group small {
+    color: #333;
+}
+
+.mcp-server-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.mcp-server-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    background-color: #fff;
+    color: #333;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+
+.mcp-server-item:hover {
+    border-color: #7b6cee;
+    background-color: #f0efff;
+}
+
+.mcp-server-item input[type="checkbox"] {
+    margin: 0;
+    accent-color: #7b6cee;
+}
+
+.mcp-server-name {
+    font-weight: 600;
+    font-size: 0.9em;
+    color: #333;
+}
+
+.mcp-server-desc {
+    color: #6c757d;
+    font-size: 0.8em;
+    margin-left: auto;
+}
+
+.mcp-advanced-section {
+    margin-top: 12px;
+    border-top: 1px solid #e0e0e0;
+    padding-top: 8px;
+}
+
+.mcp-advanced-section summary {
+    cursor: pointer;
+    color: #6c757d;
+}
+
+.mcp-advanced-section summary:hover {
+    color: #7b6cee;
+}
+
 .mcp-presets {
     margin-bottom: 10px;
 }

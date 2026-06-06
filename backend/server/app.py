@@ -465,3 +465,51 @@ async def delete_report(research_id: str):
     """Delete a specific research report by ID - no database configured."""
     logger.debug(f"Delete requested for report {research_id} - no database configured, nothing to delete")
     return {"success": True, "id": research_id}
+
+
+def _load_mcp_servers_from_config():
+    """Load MCP server configs from config.json, resolving ${ENV_VAR} references."""
+    import re
+    config_path = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+        "config.json"
+    )
+    if not os.path.exists(config_path):
+        return []
+
+    with open(config_path, "r") as f:
+        config = json.load(f)
+
+    mcp_servers = config.get("MCP_SERVERS", [])
+    braced_var_re = re.compile(r"\$\{([^}]+)\}")
+
+    def expand_env_vars(value):
+        if isinstance(value, str):
+            return braced_var_re.sub(lambda m: os.environ.get(m.group(1), m.group(0)), value)
+        elif isinstance(value, dict):
+            return {k: expand_env_vars(v) for k, v in value.items()}
+        elif isinstance(value, list):
+            return [expand_env_vars(v) for v in value]
+        return value
+
+    return [expand_env_vars(server) for server in mcp_servers]
+
+
+@app.get("/api/mcp-servers")
+async def get_mcp_servers():
+    """Return available MCP servers from config.json for the frontend to display.
+    Only returns display-safe info (name, description, enabled).
+    Full configs with credentials are NEVER exposed to the frontend.
+    """
+    servers = _load_mcp_servers_from_config()
+
+    # Build display-safe list - NO credentials exposed
+    display_servers = []
+    for server in servers:
+        display_servers.append({
+            "name": server.get("name", ""),
+            "description": server.get("description", ""),
+            "enabled": server.get("enabled", True),
+        })
+
+    return {"servers": display_servers}

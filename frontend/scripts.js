@@ -61,7 +61,13 @@ const GPTResearcher = (() => {
     initWebSocketPanel();
 
     // Initialize MCP functionality
-    initMCPSection();
+    console.log('[DEBUG] About to init MCP section...');
+    try { initMCPSection(); } catch (e) { console.warn('MCP section init error:', e); }
+    console.log('[DEBUG] MCP section init done, about to fetch servers...');
+
+    // Fetch available MCP servers from config.json
+    fetchMCPServers();
+    console.log('[DEBUG] fetchMCPServers called (async)');
 
     // The download bar is now fixed in place with CSS
     // No need to set display property here
@@ -2167,7 +2173,7 @@ const GPTResearcher = (() => {
     });
 
     // Create MCP info modal
-    createMCPInfoModal();
+    try { createMCPInfoModal(); } catch (e) { console.warn('MCP modal init skipped:', e); }
 
     // Initial validation
     validateMCPConfig();
@@ -2414,6 +2420,46 @@ const GPTResearcher = (() => {
     }
   };
 
+  // Store MCP server configs loaded from backend
+  window._mcpServerConfigs = [];
+
+  // Fetch available MCP servers from config.json via API
+  const fetchMCPServers = async () => {
+    console.log('[MCP] Fetching servers from /api/mcp-servers...');
+    try {
+      const response = await fetch('/api/mcp-servers');
+      console.log('[MCP] Response status:', response.status);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+      window._mcpServerConfigs = data.configs || [];
+      console.log('[MCP] Configs loaded:', window._mcpServerConfigs.length, 'servers:', data.servers.map(s => s.name));
+      renderMCPServerList(data.servers || []);
+    } catch (error) {
+      console.error('[MCP] Fetch failed:', error);
+      const listEl = document.getElementById('mcpServerList');
+      if (listEl) listEl.innerHTML = '<small class="text-muted">加载 MCP 配置失败: ' + error.message + '</small>';
+    }
+  };
+
+  // Render MCP server checkbox list
+  const renderMCPServerList = (servers) => {
+    const listEl = document.getElementById('mcpServerList');
+    if (!listEl) return;
+
+    if (!servers.length) {
+      listEl.innerHTML = '<small class="text-muted">config.json 中未配置 MCP 服务</small>';
+      return;
+    }
+
+    listEl.innerHTML = servers.map(server => `
+      <label class="mcp-server-item">
+        <input type="checkbox" class="mcp-server-checkbox" data-server-name="${server.name}" ${server.enabled ? 'checked' : ''}>
+        <span class="mcp-server-name">${server.name}</span>
+        <small class="mcp-server-desc">${server.description || ''}</small>
+      </label>
+    `).join('');
+  };
+
   // Collect MCP configuration data
   const collectMCPData = () => {
     const mcpEnabled = document.getElementById('mcpEnabled');
@@ -2421,33 +2467,34 @@ const GPTResearcher = (() => {
       return null;
     }
 
+    // Collect checked server names - backend will resolve full configs from config.json
+    const checkboxes = document.querySelectorAll('.mcp-server-checkbox:checked');
+    const selectedNames = Array.from(checkboxes).map(cb => cb.dataset.serverName);
+
+    // Collect custom configs from advanced textarea
+    let customConfigs = [];
     const mcpConfig = document.getElementById('mcpConfig');
-    
-    if (!mcpConfig) {
-      console.warn('MCP config element not found for data collection');
+    if (mcpConfig) {
+      try {
+        const configText = mcpConfig.value.trim();
+        const parsed = configText && configText !== '[]' ? JSON.parse(configText) : [];
+        if (Array.isArray(parsed)) {
+          // Filter out the example placeholder
+          customConfigs = parsed.filter(c => c.name && c.name !== 'my-mcp-server');
+        }
+      } catch (e) { /* ignore invalid JSON */ }
+    }
+
+    if (!selectedNames.length && !customConfigs.length) {
       return null;
     }
 
-    // Validate configuration before collecting
-    if (!validateMCPConfig()) {
-      showToast('Invalid MCP configuration - please fix errors before submitting');
-      return null;
-    }
-
-    try {
-      const configText = mcpConfig.value.trim();
-      const mcpConfigs = configText && configText !== '[]' ? JSON.parse(configText) : [];
-
-      return {
-        mcp_enabled: true,
-        mcp_strategy: "fast", // Always use "fast" strategy as default
-        mcp_configs: mcpConfigs
-      };
-    } catch (error) {
-      console.error('Error collecting MCP data:', error);
-      showToast('Error processing MCP configuration');
-      return null;
-    }
+    return {
+      mcp_enabled: true,
+      mcp_strategy: "fast",
+      mcp_server_names: selectedNames,
+      mcp_configs: customConfigs
+    };
   };
 
   return {

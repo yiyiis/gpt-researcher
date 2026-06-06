@@ -144,6 +144,39 @@ async def handle_start_command(websocket, data: str, manager):
         print("Error: Missing task or report_type")
         return
 
+    # Load MCP configs from config.json if mcp_enabled
+    # - config.json servers: resolved with ${ENV_VAR}, safe (admin-only)
+    # - Frontend custom configs: used as-is, ${ENV_VAR} NOT resolved (prevents injection)
+    if mcp_enabled:
+        from server.app import _load_mcp_servers_from_config
+        all_configs = _load_mcp_servers_from_config()
+        mcp_configs = []
+
+        # 1. Resolve config.json servers by name
+        requested_names = json_data.get("mcp_server_names", [])
+        if requested_names:
+            mcp_configs = [c for c in all_configs if c.get("name") in requested_names]
+        else:
+            mcp_configs = [c for c in all_configs if c.get("enabled", True)]
+
+        # 2. Add custom configs from frontend (no env var resolution)
+        custom_configs = json_data.get("mcp_configs", [])
+        if custom_configs and isinstance(custom_configs, list):
+            # Only add custom configs that have valid structure
+            for cc in custom_configs:
+                if isinstance(cc, dict) and cc.get("name"):
+                    # Strip any ${...} patterns to prevent env var injection
+                    import re
+                    def strip_env_refs(val):
+                        if isinstance(val, str):
+                            return re.sub(r'\$\{[^}]+\}', '***', val)
+                        elif isinstance(val, dict):
+                            return {k: strip_env_refs(v) for k, v in val.items()}
+                        elif isinstance(val, list):
+                            return [strip_env_refs(v) for v in val]
+                        return val
+                    mcp_configs.append(strip_env_refs(cc))
+
     # Create logs handler with websocket and task
     logs_handler = CustomLogsHandler(websocket, task)
     # Initialize log content with query

@@ -31,15 +31,16 @@ class MCPStreamer:
 
     async def stream_log(self, message: str, data: Any = None):
         """Stream a log message to the websocket if available."""
-        logger.info(message)
+        tagged_message = f"[MCP] {message}"
+        logger.info(tagged_message)
         
         if self.websocket:
             try:
                 from ..actions.utils import stream_output
                 await stream_output(
-                    type="logs", 
-                    content="mcp_retriever", 
-                    output=message, 
+                    type="logs",
+                    content="mcp_retriever",
+                    output=tagged_message,
                     websocket=self.websocket,
                     metadata=data
                 )

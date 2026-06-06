@@ -247,37 +247,47 @@
                     <small class="text-muted">Connect to external tools and data sources through MCP servers</small>
                     
                     <div id="mcpConfigSection" class="mcp-config-section" style="display: none;">
-                        <div class="mcp-presets">
-                            <label class="form-label">Quick Presets</label>
-                            <div class="preset-buttons">
-                                <button type="button" class="btn btn-outline-secondary btn-sm preset-btn" data-preset="github">
-                                    <i class="fab fa-github"></i> GitHub
-                                </button>
-                                <button type="button" class="btn btn-outline-secondary btn-sm preset-btn" data-preset="tavily">
-                                    <i class="fas fa-search"></i> Tavily Web Search
-                                </button>
-                                <button type="button" class="btn btn-outline-secondary btn-sm preset-btn" data-preset="filesystem">
-                                    <i class="fas fa-folder"></i> Local Files
-                                </button>
+                        <!-- MCP Server List (loaded from config.json via API) -->
+                        <div class="mcp-server-list-group">
+                            <label class="form-label">可用 MCP 服务</label>
+                            <div id="mcpServerList" class="mcp-server-list">
+                                <small class="text-muted">加载中...</small>
                             </div>
-                            <small class="text-muted">Click a preset to add pre-configured MCP servers to the JSON below</small>
+                            <small class="text-muted">在 <code>config.json</code> 中管理 MCP 服务配置</small>
                         </div>
 
-                        <div class="mcp-config-group">
-                            <label for="mcpConfig" class="form-label">MCP Servers Configuration</label>
-                            <textarea id="mcpConfig" name="mcp_config" class="form-control mcp-config-textarea" rows="8" placeholder="Paste your MCP servers configuration as JSON array...">[]</textarea>
-                            <div class="mcp-config-status">
-                                <span id="mcpConfigStatus" class="mcp-status-text">Valid JSON ✓</span>
-                                <button type="button" id="mcpFormatBtn" class="btn btn-sm btn-secondary">
-                                    <i class="fas fa-code"></i> Format JSON
-                                </button>
+                        <!-- Advanced: custom MCP via JSON (collapsible) -->
+                        <details class="mcp-advanced-section">
+                            <summary><small>高级：自定义 MCP 配置（按标准格式添加）</small></summary>
+                            <div class="mcp-config-group" style="margin-top:8px;">
+                                <textarea id="mcpConfig" name="mcp_config" class="form-control mcp-config-textarea" rows="12">[
+  {
+    "name": "my-mcp-server",
+    "description": "我的自定义 MCP 服务",
+    "connection_url": "https://example.com/mcp",
+    "connection_type": "streamable_http",
+    "connection_headers": {
+      "Authorization": "Bearer your-api-key"
+    }
+  }
+]</textarea>
+                                <div class="mcp-config-status">
+                                    <span id="mcpConfigStatus" class="mcp-status-text"></span>
+                                    <button type="button" id="mcpFormatBtn" class="btn btn-sm btn-secondary">
+                                        <i class="fas fa-code"></i> Format
+                                    </button>
+                                </div>
+                                <small class="text-muted" style="color:#666 !important;">
+                                    <b>标准格式：</b><br>
+                                    • <code>name</code> — 服务名称（必填）<br>
+                                    • <code>description</code> — 服务描述<br>
+                                    • <code>connection_url</code> — MCP 服务地址（HTTP 类型必填）<br>
+                                    • <code>connection_type</code> — 传输类型：<code>streamable_http</code> | <code>websocket</code> | <code>stdio</code><br>
+                                    • <code>connection_headers</code> — 请求头（如 Authorization）<br>
+                                    • <code>command</code> + <code>args</code> — stdio 类型的启动命令
+                                </small>
                             </div>
-                            <small class="text-muted">
-                                Paste your MCP servers configuration as a JSON array. Each server should have properties like 
-                                <code>name</code>, <code>command</code>, <code>args</code>, and optional <code>env</code> variables.
-                                <a href="#" id="mcpExampleLink">See example →</a>
-                            </small>
-                        </div>
+                        </details>
                     </div>
                 </div>
             </div>
