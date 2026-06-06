@@ -88,7 +88,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       // Show error message in chat
       onAddMessage({
         role: 'assistant',
-        content: 'Sorry, there was an error processing your request. Please try again.',
+        content: '抱歉，处理请求时出错，请重试。',
         timestamp: Date.now()
       });
     } finally {
@@ -114,10 +114,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
               </div>
             </div>
             
-            <h3 className="text-lg font-medium text-white mb-2">Ask a question about this research report</h3>
+            <h3 className="text-lg font-medium text-white mb-2">对研究报告提问</h3>
             <p className="text-sm text-gray-400 max-w-md mx-auto">
-              The AI has analyzed all the content and is ready to help you explore the findings. 
-              Ask anything about the research, request summaries, or dig deeper into specific topics.
+              AI 已分析所有内容，随时帮助你探索研究发现。
+              可以询问任何相关问题、请求摘要或深入了解特定主题。
             </p>
           </div>
         ) : (

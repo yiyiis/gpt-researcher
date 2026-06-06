@@ -94,7 +94,7 @@ const GPTResearcher = (() => {
       if (!cookieEnabled) {
         console.warn("Cookies are disabled in this browser");
         cookiesEnabled = false;
-        showToast("Cookies are disabled. History will use localStorage instead.", 5000);
+        showToast("Cookie 已禁用，历史记录将使用 localStorage 存储。", 5000);
       } else {
         // Clean up test cookie
         document.cookie = "testcookie=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
@@ -177,21 +177,21 @@ const GPTResearcher = (() => {
       // Add export history button with enhanced styling and tooltip
       const exportBtn = document.createElement('button');
       exportBtn.className = 'history-action-btn';
-      exportBtn.title = 'Export research history to file';
+      exportBtn.title = '导出研究历史到文件';
       exportBtn.innerHTML = '<i class="fas fa-file-export"></i>';
       exportBtn.addEventListener('click', exportHistory);
 
       // Add import history button with enhanced styling and tooltip
       const importBtn = document.createElement('button');
       importBtn.className = 'history-action-btn';
-      importBtn.title = 'Import research history from file';
+      importBtn.title = '从文件导入研究历史';
       importBtn.innerHTML = '<i class="fas fa-file-import"></i>';
       importBtn.addEventListener('click', triggerImportHistory);
 
       // Add cookie debug button with enhanced styling and tooltip
       const debugBtn = document.createElement('button');
       debugBtn.className = 'history-action-btn';
-      debugBtn.title = 'Check storage status';
+      debugBtn.title = '检查存储状态';
       debugBtn.innerHTML = '<i class="fas fa-database"></i>';
       debugBtn.addEventListener('click', checkCookieStatus);
 
@@ -360,23 +360,23 @@ const GPTResearcher = (() => {
     switch (socket.readyState) {
       case WebSocket.CONNECTING:
         return {
-          statusText: 'Connecting',
+          statusText: '连接中',
           indicatorClass: 'connecting'
         };
       case WebSocket.OPEN:
         return {
-          statusText: 'Connected',
+          statusText: '已连接',
           indicatorClass: 'connected'
         };
       case WebSocket.CLOSING:
         return {
-          statusText: 'Closing',
+          statusText: '关闭中',
           indicatorClass: 'connecting'
         };
       case WebSocket.CLOSED:
       default:
         return {
-          statusText: 'Disconnected',
+          statusText: '已断开',
           indicatorClass: 'disconnected'
         };
     }
@@ -476,7 +476,7 @@ const GPTResearcher = (() => {
       setCookie('conversationHistory', jsonString, 30);
 
       if (storageHistory.length > 0 && !isInitialLoad) {
-        showToast('Research history saved!');
+        showToast('研究历史已保存！');
       }
     } catch (error) {
       console.error('Error saving research history:', error);
@@ -500,7 +500,7 @@ const GPTResearcher = (() => {
       conversationHistory = [];
       saveConversationHistory();
       renderHistoryEntries();
-      showToast('Research history cleared successfully');
+      showToast('研究历史已清除');
     }
   }
 
@@ -685,7 +685,7 @@ const GPTResearcher = (() => {
     }
 
     // Inform user
-    showToast('Research parameters loaded. You can start the research again.');
+    showToast('研究参数已加载，可以重新开始研究。');
   }
 
   // Copy entry content to clipboard
@@ -701,7 +701,7 @@ const GPTResearcher = (() => {
     document.body.removeChild(textarea);
 
     // Show a toast notification
-    showToast('Research content copied to clipboard!');
+    showToast('研究内容已复制到剪贴板！');
   }
 
   // Show a toast notification
@@ -764,9 +764,9 @@ const GPTResearcher = (() => {
 
     // Prompt user about storage method
     if (cookiesEnabled) {
-      showToast('Research saved! Your history is stored in a browser cookie.');
+      showToast('研究已保存！历史记录存储在浏览器 cookie 中。');
     } else {
-      showToast('Research saved! Your history is stored using localStorage.');
+      showToast('研究已保存！历史记录存储在 localStorage 中。');
     }
   }
 
@@ -1179,7 +1179,7 @@ const GPTResearcher = (() => {
     }
 
     // Show toast notification
-    showToast('Copied to clipboard!');
+    showToast('已复制到剪贴板！');
 
     // Reset the button after 3 seconds
     setTimeout(resetIcons, 3000);
@@ -1189,7 +1189,7 @@ const GPTResearcher = (() => {
     var status = ''
     switch (state) {
       case 'in_progress':
-        status = 'Research in progress...'
+        status = '研究进行中...'
         setReportActionsStatus('disabled')
         isResearchActive = true;
         // Make the research icon spin
@@ -1211,7 +1211,7 @@ const GPTResearcher = (() => {
         }
         break
       case 'finished':
-        status = 'Research finished!'
+        status = '研究完成！'
         setReportActionsStatus('enabled')
         isResearchActive = false;
         // Stop the research icon spinning
@@ -1248,7 +1248,7 @@ const GPTResearcher = (() => {
         }
         break
       case 'error':
-        status = 'Research failed!'
+        status = '研究失败！'
         setReportActionsStatus('disabled')
         isResearchActive = false;
         // Stop the research icon spinning
@@ -1341,7 +1341,7 @@ const GPTResearcher = (() => {
       images.forEach(imageUrl => {
         const imgElement = document.createElement('img')
         imgElement.src = imageUrl
-        imgElement.alt = 'Research Image'
+        imgElement.alt = '研究图片'
         imgElement.style.maxWidth = '200px'
         imgElement.style.margin = '5px'
         imgElement.style.cursor = 'pointer'
@@ -1361,10 +1361,10 @@ const GPTResearcher = (() => {
         dialog.className = 'image-dialog';
 
         const img = document.createElement('img');
-        img.alt = 'Full-size Research Image';
+        img.alt = '完整研究图片';
 
         const closeBtn = document.createElement('button');
-        closeBtn.textContent = 'Close';
+        closeBtn.textContent = '关闭';
         closeBtn.className = 'close-btn'; // Added class for styling
 
         dialog.appendChild(img);
@@ -1451,7 +1451,7 @@ const GPTResearcher = (() => {
     // If cookie is too large, display warning and truncate history
     if (cookieSize > MAX_COOKIE_SIZE) {
       console.warn(`Cookie size (${cookieSize} bytes) exceeds the ${MAX_COOKIE_SIZE} bytes limit!`);
-      showToast('Warning: History too large for cookie storage! Oldest entries will be removed.');
+      showToast('警告：历史记录过大，超出 cookie 存储限制！最早的记录将被移除。');
 
       if (name === 'conversationHistory') {
         try {
@@ -1550,7 +1550,7 @@ const GPTResearcher = (() => {
           console.error('LocalStorage parse error:', e);
         }
       } else {
-        showToast('No research history found in localStorage');
+        showToast('localStorage 中未找到研究历史');
       }
       return;
     }
@@ -1575,7 +1575,7 @@ const GPTResearcher = (() => {
         console.error('Cookie parse error:', e);
       }
     } else {
-      showToast('No research history cookie found');
+      showToast('未找到研究历史 cookie');
     }
   }
 
@@ -1781,10 +1781,10 @@ const GPTResearcher = (() => {
       finalTranscript = '';
       button.classList.add('listening');
       button.innerHTML = '<i class="fas fa-microphone-slash"></i>';
-      button.title = 'Stop listening';
+      button.title = '停止监听';
 
       // Show visual feedback
-      showToast('Listening...', 1000);
+      showToast('正在监听...', 1000);
     };
 
     recognition.onresult = (event) => {
@@ -1814,9 +1814,9 @@ const GPTResearcher = (() => {
       resetRecognition();
 
       if (event.error === 'not-allowed') {
-        showToast('Microphone access denied. Please allow microphone access in your browser settings.', 3000);
+        showToast('麦克风访问被拒绝。请在浏览器设置中允许麦克风访问。', 3000);
       } else {
-        showToast('Speech recognition error: ' + event.error, 3000);
+        showToast('语音识别错误：' + event.error, 3000);
       }
     };
 
@@ -1829,7 +1829,7 @@ const GPTResearcher = (() => {
       isListening = false;
       button.classList.remove('listening');
       button.innerHTML = '<i class="fas fa-microphone"></i>';
-      button.title = 'Use voice input';
+      button.title = '语音输入';
     };
 
     // Toggle speech recognition on button click
@@ -2084,7 +2084,7 @@ const GPTResearcher = (() => {
       if (element.classList.contains('expanded-view')) {
         buttonIcon.classList.remove('fa-compress-alt');
         buttonIcon.classList.add('fa-compress-alt');
-        button.title = 'Collapse'; // Update title to Collapse
+        button.title = '收起'; // Update title to Collapse
 
         // Find content containers and expand their height
         const contentContainers = element.querySelectorAll('#reportContainer, #output, #chatMessages');
@@ -2101,7 +2101,7 @@ const GPTResearcher = (() => {
       } else {
         buttonIcon.classList.remove('fa-compress-alt');
         buttonIcon.classList.add('fa-expand-alt');
-        button.title = 'Expand'; // Update title to Expand
+        button.title = '展开'; // Update title to Expand
 
         // Reset heights back to original when collapsed
         const contentContainers = element.querySelectorAll('#reportContainer, #output, #chatMessages');
@@ -2190,7 +2190,7 @@ const GPTResearcher = (() => {
     
     if (!configText || configText === '[]') {
       mcpConfig.className = 'form-control mcp-config-textarea';
-      mcpConfigStatus.textContent = 'Empty configuration';
+      mcpConfigStatus.textContent = '空配置';
       mcpConfigStatus.className = 'mcp-status-text';
       return true;
     }
@@ -2268,7 +2268,7 @@ const GPTResearcher = (() => {
     if (mcpConfig) {
       mcpConfig.value = JSON.stringify(exampleConfig, null, 2);
       validateMCPConfig();
-      showToast('Example configuration loaded!');
+      showToast('示例配置已加载！');
     }
   };
 

@@ -42,14 +42,14 @@ export default function MobileLayout({
   
   // Format timestamp for display
   const formatTimestamp = (timestamp: number | string | Date | undefined) => {
-    if (!timestamp) return 'Unknown time';
-    
+    if (!timestamp) return '未知时间';
+
     try {
       const date = new Date(timestamp);
-      if (isNaN(date.getTime())) return 'Unknown time';
+      if (isNaN(date.getTime())) return '未知时间';
       return formatDistanceToNow(date, { addSuffix: true });
     } catch {
-      return 'Unknown time';
+      return '未知时间';
     }
   };
   

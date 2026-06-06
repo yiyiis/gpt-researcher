@@ -1,6 +1,18 @@
 from dotenv import load_dotenv
 import logging
+import os
+import sys
 from pathlib import Path
+
+# Load .env from the correct location:
+# - Compiled executable: same directory as the .exe
+# - Normal Python: current working directory (default behavior)
+if getattr(sys, 'frozen', False):
+    # Running as compiled executable (PyInstaller, Nuitka, etc.)
+    env_path = os.path.join(os.path.dirname(sys.executable), ".env")
+    load_dotenv(env_path)
+else:
+    load_dotenv()
 
 # Create logs directory if it doesn't exist
 logs_dir = Path("logs")

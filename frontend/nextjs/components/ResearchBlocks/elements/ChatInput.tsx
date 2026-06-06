@@ -30,7 +30,7 @@ const ChatInput: FC<TChatInputProps> = ({
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isFocused, setIsFocused] = useState(false);
-  const placeholder = "Any questions about this report?";
+  const placeholder = "对报告有什么问题？";
 
   const resetHeight = () => {
     if (textareaRef.current) {

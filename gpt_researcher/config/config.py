@@ -7,6 +7,7 @@ retrievers, and various operational parameters.
 
 import json
 import os
+import sys
 import warnings
 from typing import Any, Dict, List, Type, Union, get_args, get_origin
 
@@ -14,6 +15,27 @@ from gpt_researcher.llm_provider.generic.base import ReasoningEfforts
 
 from .variables.base import BaseConfig
 from .variables.default import DEFAULT_CONFIG
+
+
+def _get_base_path() -> str:
+    """Get the base path for finding config files.
+
+    Handles three scenarios:
+    1. PyInstaller bundle: uses sys._MEIPASS (temp extraction dir) or exe dir
+    2. Nuitka / compiled: uses the executable's directory
+    3. Normal Python: uses the project root (3 levels up from this file)
+    """
+    # PyInstaller: sys.frozen is set, _MEIPASS is the temp extraction dir
+    if getattr(sys, 'frozen', False):
+        # First try the directory containing the executable (where config.json likely lives)
+        exe_dir = os.path.dirname(sys.executable)
+        if os.path.exists(os.path.join(exe_dir, "config.json")):
+            return exe_dir
+        # Fallback to PyInstaller's temp dir (bundled files are here)
+        return getattr(sys, '_MEIPASS', exe_dir)
+
+    # Normal Python execution: walk up from this file to project root
+    return os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
 class Config:
@@ -155,26 +177,46 @@ class Config:
 
     @classmethod
     def load_config(cls, config_path: str | None) -> Dict[str, Any]:
-        """Load a configuration by name."""
-        config_path = config_path or os.environ.get("CONFIG_PATH")
-        if not config_path:
-            return DEFAULT_CONFIG
+        """Load a configuration by name.
 
-        # config_path = os.path.join(cls.CONFIG_DIR, config_path)
-        if not os.path.exists(config_path):
-            if config_path and config_path != "default":
-                print(f"Warning: Configuration not found at '{config_path}'. Using default configuration.")
+        Resolution order:
+        1. Explicit config_path argument (if it exists as a file)
+        2. CONFIG_PATH environment variable (if set and file exists)
+        3. config.json auto-discovered near the executable or project root
+        4. DEFAULT_CONFIG as final fallback
+
+        Works in normal Python, PyInstaller, and Nuitka compiled environments.
+        """
+        def _merge_with_defaults(path: str) -> Dict[str, Any]:
+            with open(path, "r") as f:
+                custom_config = json.load(f)
+            merged = DEFAULT_CONFIG.copy()
+            merged.update(custom_config)
+            return merged
+
+        # Step 1: Try explicit config_path argument
+        if config_path and config_path != "default":
+            if os.path.exists(config_path):
+                return _merge_with_defaults(config_path)
+            else:
+                print(f"Warning: Configuration not found at '{config_path}'.")
                 if not config_path.endswith(".json"):
                     print(f"Do you mean '{config_path}.json'?")
-            return DEFAULT_CONFIG
 
-        with open(config_path, "r") as f:
-            custom_config = json.load(f)
+        # Step 2: Try CONFIG_PATH environment variable
+        env_config_path = os.environ.get("CONFIG_PATH")
+        if env_config_path and os.path.exists(env_config_path):
+            return _merge_with_defaults(env_config_path)
 
-        # Merge with default config to ensure all keys are present
-        merged_config = DEFAULT_CONFIG.copy()
-        merged_config.update(custom_config)
-        return merged_config
+        # Step 3: Auto-discover config.json
+        # Uses _get_base_path() which handles compiled executables correctly
+        base_path = _get_base_path()
+        auto_config_path = os.path.join(base_path, "config.json")
+        if os.path.exists(auto_config_path):
+            return _merge_with_defaults(auto_config_path)
+
+        # Step 4: Fallback to defaults
+        return DEFAULT_CONFIG
 
     @classmethod
     def list_available_configs(cls) -> List[str]:

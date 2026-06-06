@@ -144,7 +144,7 @@ export const GPTResearcher = ({
       // Add error message to display
       setOrderedData(prevOrder => [...prevOrder, { 
         type: 'chat', 
-        content: 'Sorry, there was an error processing your request. Please try again.' 
+        content: '抱歉，处理请求时出错，请重试。' 
       }]);
     } finally {
       setLoading(false);

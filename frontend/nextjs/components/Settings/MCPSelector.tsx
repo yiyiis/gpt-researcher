@@ -261,25 +261,25 @@ const MCPSelector: React.FC<MCPSelectorProps> = ({
               checked={enabled}
               onChange={handleEnabledChange}
             />
-            Enable MCP (Model Context Protocol)
+            启用 MCP（模型上下文协议）
           </label>
           <button
             type="button"
             className="settings mcp-info-btn"
             onClick={() => setShowInfoModal(true)}
-            title="Learn about MCP"
+            title="了解 MCP"
           >
             ℹ️
           </button>
         </div>
         <small className="text-muted" style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '0.85rem', marginBottom: '15px', display: 'block' }}>
-          Connect to external tools and data sources through MCP servers
+          通过 MCP 服务器连接外部工具和数据源
         </small>
 
         {enabled && (
           <div className="settings mcp-config-section">
             <div className="settings mcp-presets">
-              <label className="agent_question" style={{ marginBottom: '10px' }}>Quick Presets</label>
+              <label className="agent_question" style={{ marginBottom: '10px' }}>快速预设</label>
               <div className="settings preset-buttons">
                 <button
                   type="button"
@@ -293,27 +293,27 @@ const MCPSelector: React.FC<MCPSelectorProps> = ({
                   className={`settings preset-btn ${isPresetSelected('tavily') ? 'selected' : ''}`}
                   onClick={() => togglePreset('tavily')}
                 >
-                  <i className="fas fa-search"></i> Tavily Web Search
+                  <i className="fas fa-search"></i> Tavily 网页搜索
                 </button>
                 <button
                   type="button"
                   className={`settings preset-btn ${isPresetSelected('filesystem') ? 'selected' : ''}`}
                   onClick={() => togglePreset('filesystem')}
                 >
-                  <i className="fas fa-folder"></i> Local Files
+                  <i className="fas fa-folder"></i> 本地文件
                 </button>
               </div>
               <small className="text-muted" style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '0.85rem', marginTop: '8px', display: 'block' }}>
-                Click a preset to toggle MCP servers in the configuration below. Selected presets are highlighted.
+                点击预设以切换下方配置中的 MCP 服务器。选中的预设会高亮显示。
               </small>
             </div>
 
             <div className="settings mcp-config-group">
-              <label className="agent_question" style={{ marginBottom: '10px' }}>MCP Servers Configuration</label>
+              <label className="agent_question" style={{ marginBottom: '10px' }}>MCP 服务器配置</label>
               <textarea
                 className={`settings mcp-config-textarea ${validationStatus.isValid ? 'valid' : 'invalid'}`}
                 rows={12}
-                placeholder="Paste your MCP servers configuration as JSON array..."
+                placeholder="粘贴 MCP 服务器配置（JSON 数组格式）..."
                 value={configText}
                 onChange={handleConfigChange}
                 style={{ minHeight: '300px' }}
@@ -327,11 +327,11 @@ const MCPSelector: React.FC<MCPSelectorProps> = ({
                   className="settings mcp-format-btn"
                   onClick={formatJSON}
                 >
-                  <i className="fas fa-code"></i> Format JSON
+                  <i className="fas fa-code"></i> 格式化 JSON
                 </button>
               </div>
               <small className="text-muted" style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '0.85rem', marginTop: '8px', display: 'block', lineHeight: '1.4' }}>
-                Paste your MCP servers configuration as a JSON array. Each server should have properties like{' '}
+                粘贴 MCP 服务器配置的 JSON 数组。每个服务器应包含以下属性：{' '}
                 <code style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', padding: '2px 4px', borderRadius: '3px', color: '#0d9488' }}>name</code>,{' '}
                 <code style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', padding: '2px 4px', borderRadius: '3px', color: '#0d9488' }}>command</code>,{' '}
                 <code style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', padding: '2px 4px', borderRadius: '3px', color: '#0d9488' }}>args</code>, and optional{' '}
@@ -342,7 +342,7 @@ const MCPSelector: React.FC<MCPSelectorProps> = ({
                   onClick={(e) => { e.preventDefault(); showExample(); }}
                   style={{ color: '#0d9488', textDecoration: 'none', fontWeight: '500' }}
                 >
-                  See example →
+                  查看示例 →
                 </a>
               </small>
             </div>

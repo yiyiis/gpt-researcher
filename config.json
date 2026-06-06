@@ -14,7 +14,7 @@
       "connection_url": "https://open.bigmodel.cn/api/mcp/web_search_prime/mcp",
       "connection_type": "streamable_http",
       "connection_headers": {
-        "Authorization": "Bearer ${OPENAI_API_KEY}"
+        "Authorization": "Bearer ${ZHIPU_API_KEY}"
       },
       "enabled": true
     },
@@ -24,7 +24,7 @@
       "connection_url": "https://open.bigmodel.cn/api/mcp/web_reader/mcp",
       "connection_type": "streamable_http",
       "connection_headers": {
-        "Authorization": "Bearer ${OPENAI_API_KEY}"
+        "Authorization": "Bearer ${ZHIPU_API_KEY}"
       },
       "enabled": true
     }
