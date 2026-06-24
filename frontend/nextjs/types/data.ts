@@ -33,10 +33,18 @@ export type Data = BasicData | LanggraphButtonData | DifferencesData | QuestionD
 
 export interface MCPConfig {
   name: string;
-  command: string;
-  args: string[];
-  env: Record<string, string>;
+  description?: string;
+  enabled?: boolean; // 列表里是否勾选（控制发不发给后端）
+  // HTTP/远程（智谱 MCP 走这套）
+  connection_url?: string;
+  connection_type?: string; // "streamable_http" | "websocket" | "stdio"
+  connection_headers?: Record<string, string>;
+  // stdio/本地（GitHub/文件系统走这套）
+  command?: string;
+  args?: string[];
+  env?: Record<string, string>;
 }
+
 
 export interface ChatBoxSettings {
   report_type: string;
@@ -68,4 +76,24 @@ export interface ResearchHistoryItem {
   timestamp: number;
   orderedData: Data[];
   chatMessages?: ChatMessage[];
+  workspaceId?: string; // 归属工作区
+}
+
+// 工作区（项目式空间）
+export interface Workspace {
+  id: string;
+  name: string;
+  description?: string;
+  created_at?: number;
+  updated_at?: number;
+}
+
+// 工作区内的文档/资料
+export interface WorkspaceDocument {
+  id: string;
+  workspaceId: string;
+  filename: string;
+  filePath: string;
+  fileSize: number;
+  uploadedAt: number;
 } 

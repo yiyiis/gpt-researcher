@@ -25,33 +25,31 @@ export const useResearchHistory = () => {
         if (localHistory && localHistory.length > 0) {
           setHistory(localHistory);
         }
-        
-        // Then try to fetch from server, but only for items we have locally
+
+        // Always fetch from server so history survives localStorage clears /
+        // browser changes (backend persists to data/reports.json)
+        let response: Response;
         if (localHistory && localHistory.length > 0) {
-          // Extract IDs from local history to filter server results
+          // Local history exists: fetch only matching IDs for sync
           const localIds = localHistory.map((item: ResearchHistoryItem) => item.id).join(',');
           console.log(`Sending ${localHistory.length} local IDs to server for filtering`);
-          
-          const response = await fetch(`/api/reports?report_ids=${localIds}`);
-          if (response.ok) {
-            const data = await response.json();
-            
-            // Check if the response has the expected structure
-            if (data.reports && Array.isArray(data.reports)) {
-              console.log('Loaded research history from server:', data.reports.length, 'items');
-              
-              // Merge local and server history
-              await syncLocalHistoryWithServer(localHistory, data.reports);
-            } else {
-              console.warn('Server response did not contain reports array', data);
-              // Keep using the local history we already loaded
-            }
+          response = await fetch(`/api/reports?report_ids=${localIds}`);
+        } else {
+          // No local history: fetch ALL reports from server
+          console.log('No local history found, fetching all reports from server');
+          response = await fetch('/api/reports');
+        }
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.reports && Array.isArray(data.reports)) {
+            console.log('Loaded research history from server:', data.reports.length, 'items');
+            await syncLocalHistoryWithServer(localHistory || [], data.reports);
           } else {
-            console.warn('Failed to load history from server, status:', response.status);
-            // We're already using local history from above
+            console.warn('Server response did not contain reports array', data);
           }
         } else {
-          console.log('No local history found, skipping server fetch');
+          console.warn('Failed to load history from server, status:', response.status);
         }
       } catch (error) {
         console.error('Error fetching research history:', error);
@@ -154,11 +152,16 @@ export const useResearchHistory = () => {
   }, []); // Empty dependency array - only run once on mount
   
   // Save new research
-  const saveResearch = async (question: string, answer: string, orderedData: Data[]) => {
+  const saveResearch = async (
+    question: string,
+    answer: string,
+    orderedData: Data[],
+    workspaceId?: string
+  ) => {
     try {
       // Generate a unique ID
       const id = uuidv4();
-      
+
       // Save to backend
       const response = await fetch('/api/reports', {
         method: 'POST',
@@ -170,7 +173,8 @@ export const useResearchHistory = () => {
           question,
           answer,
           orderedData,
-          chatMessages: []
+          chatMessages: [],
+          workspace_id: workspaceId,
         }),
       });
       
@@ -186,6 +190,7 @@ export const useResearchHistory = () => {
           orderedData,
           chatMessages: [],
           timestamp: Date.now(),
+          workspaceId: workspaceId || 'default',
         };
         
         setHistory(prev => [newResearch, ...prev]);

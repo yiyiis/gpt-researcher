@@ -219,3 +219,273 @@ body::after {
   z-index: 50;
 }
 
+
+/* ===== MCP 工具使用日志样式（Agent Work 区醒目显示）===== */
+.mcp-log-item {
+  background: rgba(13, 148, 136, 0.12);
+  border: 1px solid rgba(13, 148, 136, 0.4);
+  border-left: 3px solid #0d9488;
+  box-shadow: 0 0 12px rgba(13, 148, 136, 0.15);
+}
+.mcp-log-item p {
+  color: #0cdbb6;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.9rem;
+}
+
+/* ===== 工作区 Tab 切换 ===== */
+.ws-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.ws-tab {
+  flex: 1;
+  padding: 8px 4px;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.5);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.ws-tab:hover {
+  color: rgba(255, 255, 255, 0.8);
+}
+.ws-tab.active {
+  color: #0cdbb6;
+  border-bottom-color: #0d9488;
+}
+
+/* ===== 工作区文档管理 ===== */
+.ws-docs-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.ws-upload-zone {
+  border: 2px dashed rgba(255, 255, 255, 0.15);
+  border-radius: 0.5rem;
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.ws-upload-zone:hover,
+.ws-upload-zone.drag-active {
+  border-color: #0d9488;
+  background: rgba(13, 148, 136, 0.08);
+}
+.ws-upload-zone.uploading {
+  opacity: 0.6;
+  cursor: wait;
+}
+.ws-upload-text {
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.55);
+}
+.ws-doc-error {
+  color: #f87171;
+  font-size: 0.78rem;
+  padding: 4px 0;
+}
+.ws-doc-empty {
+  color: rgba(255, 255, 255, 0.35);
+  font-size: 0.82rem;
+  text-align: center;
+  padding: 16px 0;
+}
+.ws-doc-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.ws-doc-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 0.4rem;
+  transition: border-color 0.2s ease;
+}
+.ws-doc-item:hover {
+  border-color: rgba(13, 148, 136, 0.4);
+}
+.ws-doc-info {
+  flex: 1;
+  min-width: 0;
+}
+.ws-doc-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ws-doc-icon {
+  color: #0d9488;
+  flex-shrink: 0;
+}
+.ws-doc-meta {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.4);
+  margin-top: 2px;
+  margin-left: 20px;
+}
+.ws-doc-delete {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 0.25rem;
+  transition: all 0.2s ease;
+}
+.ws-doc-delete:hover {
+  color: #f87171;
+  background: rgba(248, 113, 113, 0.1);
+}
+
+/* ===== 工作区设置弹窗 ===== */
+.ws-settings-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.ws-settings-modal {
+  background: #111827;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.75rem;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+.ws-settings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.ws-settings-header h3 {
+  color: #fff;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+.ws-settings-close {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  font-size: 1rem;
+}
+.ws-settings-close:hover {
+  color: #fff;
+}
+.ws-settings-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.ws-settings-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ws-settings-field label {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+.ws-settings-input {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0.375rem;
+  padding: 8px 12px;
+  color: #fff;
+  font-size: 0.9rem;
+}
+.ws-settings-input:focus {
+  outline: none;
+  border-color: #0d9488;
+}
+.ws-settings-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.ws-settings-hint {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.4);
+}
+.ws-settings-meta {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.4);
+}
+.ws-settings-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.ws-settings-delete-btn {
+  font-size: 0.8rem;
+  color: #f87171;
+  background: transparent;
+  border: 1px solid rgba(248, 113, 113, 0.3);
+  border-radius: 0.375rem;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.ws-settings-delete-btn:hover {
+  background: rgba(248, 113, 113, 0.15);
+}
+.ws-settings-delete-btn.confirm {
+  background: rgba(248, 113, 113, 0.2);
+  border-color: #f87171;
+}
+.ws-settings-cancel-btn {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.6);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 6px 12px;
+}
+.ws-settings-cancel-btn:hover {
+  color: #fff;
+}
+.ws-settings-save-btn {
+  font-size: 0.85rem;
+  color: #fff;
+  background: #0d9488;
+  border: none;
+  border-radius: 0.375rem;
+  padding: 6px 16px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+.ws-settings-save-btn:hover {
+  background: #0fa596;
+}
+.ws-settings-save-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

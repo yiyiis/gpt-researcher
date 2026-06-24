@@ -4,6 +4,7 @@ import { useRef, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useWebSocket } from '@/hooks/useWebSocket';
 import { useResearchHistoryContext } from '@/hooks/ResearchHistoryContext';
+import { useWorkspaceContext } from '@/hooks/WorkspaceContext';
 import { useScrollHandler } from '@/hooks/useScrollHandler';
 import { startLanggraphResearch } from '../components/Langgraph/Langgraph';
 import findDifferences from '../helpers/findDifferences';
@@ -34,7 +35,8 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [isInChatMode, setIsInChatMode] = useState(false);
   const [chatBoxSettings, setChatBoxSettings] = useState<ChatBoxSettings>(() => {
-    // Default settings
+    // Default settings（config.json 内置服务由 MCPSelector 从 API 动态加载，
+    // mcp_configs 仅存放用户在前端添加的自定义服务）
     const defaultSettings = {
       report_type: "research_report",
       report_source: "web",
@@ -104,6 +106,9 @@ export default function Home() {
     addChatMessage,
     getChatMessages
   } = useResearchHistoryContext();
+
+  // 当前工作区（研究报告归属到此工作区）
+  const { currentWorkspaceId } = useWorkspaceContext();
 
   // Only initialize the WebSocket hook reference, don't connect automatically
   const websocketRef = useRef(useWebSocket(
@@ -343,7 +348,8 @@ export default function Home() {
         await saveResearch(
           newQuestion,  // question
           '',           // empty answer initially
-          initialOrderedData  // ordered data
+          initialOrderedData,  // ordered data
+          currentWorkspaceId
         );
         
         // Make direct API call to get response
@@ -470,9 +476,10 @@ export default function Home() {
       await saveResearch(
         newQuestion,  // question
         '',           // empty answer initially
-        initialOrderedData  // ordered data
+        initialOrderedData,  // ordered data
+        currentWorkspaceId
       );
-      
+
       // Make direct API call instead of using websockets
       const response = await fetch('/api/chat', {
         method: 'POST',
@@ -766,7 +773,7 @@ export default function Home() {
           if (isNewResearch) {
             isUpdatingRef.current = true;
             try {
-              const newId = await saveResearch(question, answer, orderedData);
+              const newId = await saveResearch(question, answer, orderedData, currentWorkspaceId);
               setCurrentResearchId(newId);
               
               // Don't navigate to the research page URL anymore
@@ -787,7 +794,7 @@ export default function Home() {
     
     // Call the async function
     saveOrUpdateResearch();
-  }, [showResult, loading, answer, question, orderedData, history, saveResearch, updateResearch, isInChatMode, currentResearchId, getResearchById]);
+  }, [showResult, loading, answer, question, orderedData, history, saveResearch, updateResearch, isInChatMode, currentResearchId, getResearchById, currentWorkspaceId]);
 
   // Handle selecting a research from history
   const handleSelectResearch = async (id: string) => {
@@ -815,7 +822,7 @@ export default function Home() {
   useEffect(() => {
     const groupedData = preprocessOrderedData(orderedData);
     const statusReports = ["agent_generated", "starting_research", "planning_research", "error"];
-    
+
     const newLogs = groupedData.reduce((acc: any[], data) => {
       // Process accordion blocks (grouped data)
       if (data.type === 'accordionBlock') {
@@ -826,7 +833,7 @@ export default function Home() {
           key: `${item.type}-${item.content}-${subIndex}`,
         }));
         return [...acc, ...logs];
-      } 
+      }
       // Process status reports
       else if (statusReports.includes(data.content)) {
         return [...acc, {
@@ -836,9 +843,18 @@ export default function Home() {
           key: `${data.type}-${data.content}`,
         }];
       }
+      // Process MCP retriever logs (智谱等 MCP 工具的使用情况)
+      else if (data.content === 'mcp_retriever') {
+        return [...acc, {
+          header: 'mcp',
+          text: data.output,
+          metadata: data.metadata,
+          key: `${data.type}-${data.content}-${acc.length}`,
+        }];
+      }
       return acc;
     }, []);
-    
+
     setAllLogs(newLogs);
   }, [orderedData]);
 

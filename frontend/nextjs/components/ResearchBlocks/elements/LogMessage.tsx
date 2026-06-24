@@ -64,6 +64,18 @@ const LogMessage: React.FC<LogMessageProps> = ({ logs }) => {
       {processedLogs.map((log, index) => {
         if (log.header === 'subquery_context_window' || log.header === 'differences') {
           return <Accordion key={index} logs={[log]} />;
+        } else if (log.header === 'mcp') {
+          // MCP 工具使用日志：青色高亮，醒目展示用了哪些 MCP 工具
+          return (
+            <div
+              key={index}
+              className="mcp-log-item w-full max-w-4xl mx-auto rounded-lg pt-2 mt-3 pb-2 px-4"
+            >
+              <p className="py-3 text-base leading-relaxed">
+                {log.text}
+              </p>
+            </div>
+          );
         } else if (log.header !== 'selected_images' && log.header !== 'scraping_images') {
           return (
             <div

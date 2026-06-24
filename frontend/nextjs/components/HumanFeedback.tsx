@@ -28,7 +28,7 @@ const HumanFeedback: React.FC<HumanFeedbackProps> = ({ questionForHuman, websock
           className="w-full p-2 border rounded-md"
           value={userFeedback}
           onChange={(e) => setUserFeedback(e.target.value)}
-          placeholder="在此输入反馈（留空表示"否"）"
+          placeholder="在此输入反馈（留空表示&ldquo;否&rdquo;）"
         />
         <button
           type="submit"

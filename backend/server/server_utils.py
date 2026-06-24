@@ -144,6 +144,14 @@ async def handle_start_command(websocket, data: str, manager):
         print("Error: Missing task or report_type")
         return
 
+    # Auto-enable MCP when the configured retriever is 'mcp' but the frontend
+    # didn't explicitly toggle it on. This keeps the local deployment usable
+    # without requiring the user to enable MCP in the UI every time.
+    if not mcp_enabled:
+        from os import environ
+        if environ.get("RETRIEVER", "").strip().lower() == "mcp":
+            mcp_enabled = True
+
     # Load MCP configs from config.json if mcp_enabled
     # - config.json servers: resolved with ${ENV_VAR}, safe (admin-only)
     # - Frontend custom configs: used as-is, ${ENV_VAR} NOT resolved (prevents injection)

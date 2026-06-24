@@ -3,6 +3,7 @@ import { Lexend } from "next/font/google";
 import PlausibleProvider from "next-plausible";
 import { GoogleAnalytics } from '@next/third-parties/google'
 import { ResearchHistoryProvider } from "@/hooks/ResearchHistoryContext";
+import { WorkspaceProvider } from "@/hooks/WorkspaceContext";
 import "./globals.css";
 import Script from 'next/script';
 
@@ -73,7 +74,9 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <ResearchHistoryProvider>
-          {children}
+          <WorkspaceProvider>
+            {children}
+          </WorkspaceProvider>
         </ResearchHistoryProvider>
       </body>
     </html>

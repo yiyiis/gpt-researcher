@@ -35,6 +35,8 @@ from gpt_researcher.utils.enum import Tone
 from chat.chat import ChatAgentWithMemory
 
 from server.report_store import ReportStore
+from server.db import WorkspaceStore
+from server import migrate as migrate_module
 
 # MongoDB services removed - no database persistence needed
 
@@ -89,6 +91,9 @@ async def lifespan(app: FastAPI):
         logger.warning(f"Frontend directory not found: {frontend_path}")
     
     logger.info("GPT Researcher API ready - local mode (no database persistence)")
+    # 初始化 SQLite 工作区存储 + 迁移旧数据
+    await migrate_module.migrate_if_needed(workspace_store)
+    logger.info("Workspace storage ready")
     yield
     # Shutdown
     logger.info("Research API shutting down")
@@ -133,6 +138,9 @@ app.mount("/site", StaticFiles(directory=frontend_dir), name="site")
 manager = WebSocketManager()
 
 report_store = ReportStore(Path(os.getenv('REPORT_STORE_PATH', os.path.join('data', 'reports.json'))))
+
+# SQLite 工作区存储（主存储，替代 reports.json 的全量重写）
+workspace_store = WorkspaceStore(Path(os.getenv('WORKSPACE_DB_PATH', os.path.join('data', 'workspace.db'))))
 
 # Constants
 DOC_PATH = os.getenv("DOC_PATH", "./my-docs")
@@ -179,17 +187,20 @@ async def read_report(request: Request, research_id: str):
     return FileResponse(docx_path)
 
 
-# Simplified API routes - no database persistence
+# API routes — 报告（SQLite 主存储，JSON 兼容双写）
 @app.get("/api/reports")
-async def get_all_reports(report_ids: str = None):
+async def get_all_reports(report_ids: str = None, workspace_id: str = None):
     report_ids_list = report_ids.split(",") if report_ids else None
-    reports = await report_store.list_reports(report_ids_list)
+    # 优先从 SQLite 读取（支持 workspace_id 过滤）
+    reports = await workspace_store.list_reports(
+        workspace_id=workspace_id, report_ids=report_ids_list
+    )
     return {"reports": reports}
 
 
 @app.get("/api/reports/{research_id}")
 async def get_report_by_id(research_id: str):
-    report = await report_store.get_report(research_id)
+    report = await workspace_store.get_report(research_id)
     if report is None:
         raise HTTPException(status_code=404, detail="Report not found")
     return {"report": report}
@@ -202,14 +213,23 @@ async def create_or_update_report(request: Request):
         research_id = data.get("id", "temp_id")
 
         now_ms = int(time.time() * 1000)
-        existing = await report_store.get_report(research_id)
+        existing = await workspace_store.get_report(research_id)
         incoming_timestamp = data.get("timestamp")
         timestamp = incoming_timestamp if isinstance(incoming_timestamp, int) else now_ms
         if existing and isinstance(existing.get("timestamp"), int):
             timestamp = max(timestamp, existing["timestamp"])
 
+        # 确定归属工作区：新报告用传入值或默认工作区；已存在则保留原归属
+        workspace_id = (
+            data.get("workspace_id")
+            or data.get("workspaceId")
+            or (existing.get("workspaceId") if existing else None)
+            or migrate_module.DEFAULT_WORKSPACE_ID
+        )
+
         report = {
             "id": research_id,
+            "workspace_id": workspace_id,
             "question": data.get("question"),
             "answer": data.get("answer"),
             "orderedData": data.get("orderedData") or [],
@@ -217,7 +237,15 @@ async def create_or_update_report(request: Request):
             "timestamp": timestamp,
         }
 
-        await report_store.upsert_report(research_id, report)
+        # 写 SQLite（主）
+        await workspace_store.upsert_report(research_id, report)
+
+        # 兼容：同时写旧 JSON store（不带 workspace_id，保持原格式）
+        compat_report = {
+            k: v for k, v in report.items() if k != "workspace_id"
+        }
+        await report_store.upsert_report(research_id, compat_report)
+
         return {"success": True, "id": research_id}
     except Exception as e:
         logger.error(f"Error processing report creation: {e}")
@@ -226,7 +254,7 @@ async def create_or_update_report(request: Request):
 
 @app.put("/api/reports/{research_id}")
 async def update_report(research_id: str, request: Request):
-    existing = await report_store.get_report(research_id)
+    existing = await workspace_store.get_report(research_id)
     if existing is None:
         raise HTTPException(status_code=404, detail="Report not found")
 
@@ -240,13 +268,17 @@ async def update_report(research_id: str, request: Request):
         "timestamp": now_ms,
     }
 
-    await report_store.upsert_report(research_id, updated)
+    await workspace_store.upsert_report(research_id, updated)
+    # 兼容写
+    compat_report = {k: v for k, v in updated.items() if k != "workspace_id"}
+    await report_store.upsert_report(research_id, compat_report)
     return {"success": True, "id": research_id}
 
 
 @app.delete("/api/reports/{research_id}")
 async def delete_report(research_id: str):
-    existed = await report_store.delete_report(research_id)
+    existed = await workspace_store.delete_report(research_id)
+    await report_store.delete_report(research_id)  # 兼容删
     if not existed:
         raise HTTPException(status_code=404, detail="Report not found")
     return {"success": True}
@@ -254,7 +286,7 @@ async def delete_report(research_id: str):
 
 @app.get("/api/reports/{research_id}/chat")
 async def get_report_chat(research_id: str):
-    report = await report_store.get_report(research_id)
+    report = await workspace_store.get_report(research_id)
     if report is None:
         raise HTTPException(status_code=404, detail="Report not found")
     return {"chatMessages": report.get("chatMessages") or []}
@@ -262,7 +294,7 @@ async def get_report_chat(research_id: str):
 
 @app.post("/api/reports/{research_id}/chat")
 async def add_report_chat_message(research_id: str, request: Request):
-    report = await report_store.get_report(research_id)
+    report = await workspace_store.get_report(research_id)
     if report is None:
         raise HTTPException(status_code=404, detail="Report not found")
 
@@ -280,7 +312,7 @@ async def add_report_chat_message(research_id: str, request: Request):
         "timestamp": now_ms,
     }
 
-    await report_store.upsert_report(research_id, updated)
+    await workspace_store.upsert_report(research_id, updated)
     return {"success": True, "id": research_id}
 
 
@@ -454,17 +486,104 @@ async def research_report_chat(research_id: str, request: Request):
         logger.error(f"Error in research report chat: {str(e)}", exc_info=True)
         return {"error": str(e)}
 
-@app.put("/api/reports/{research_id}")
-async def update_report(research_id: str, request: Request):
-    """Update a specific research report by ID - no database configured."""
-    logger.debug(f"Update requested for report {research_id} - no database configured, not persisted")
-    return {"success": True, "id": research_id}
 
-@app.delete("/api/reports/{research_id}")
-async def delete_report(research_id: str):
-    """Delete a specific research report by ID - no database configured."""
-    logger.debug(f"Delete requested for report {research_id} - no database configured, nothing to delete")
-    return {"success": True, "id": research_id}
+# ======================== 工作区（Workspace）API ========================
+import uuid as _uuid
+
+
+@app.get("/api/workspaces")
+async def list_workspaces():
+    workspaces = await workspace_store.list_workspaces()
+    return {"workspaces": workspaces}
+
+
+@app.post("/api/workspaces")
+async def create_workspace(request: Request):
+    try:
+        data = await request.json()
+        ws_id = data.get("id") or str(_uuid.uuid4())
+        name = data.get("name", "").strip()
+        if not name:
+            raise HTTPException(status_code=400, detail="工作区名称不能为空")
+        description = data.get("description", "")
+        ws = await workspace_store.create_workspace(ws_id, name, description)
+        return {"success": True, "workspace": ws}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error creating workspace: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.put("/api/workspaces/{ws_id}")
+async def update_workspace(ws_id: str, request: Request):
+    data = await request.json()
+    updated = await workspace_store.update_workspace(
+        ws_id,
+        name=data.get("name"),
+        description=data.get("description"),
+    )
+    if updated is None:
+        raise HTTPException(status_code=404, detail="工作区不存在")
+    return {"success": True, "workspace": updated}
+
+
+@app.delete("/api/workspaces/{ws_id}")
+async def delete_workspace(ws_id: str):
+    # 不允许删除默认工作区
+    if ws_id == migrate_module.DEFAULT_WORKSPACE_ID:
+        raise HTTPException(status_code=400, detail="默认工作区不可删除")
+    existed = await workspace_store.delete_workspace(ws_id)
+    if not existed:
+        raise HTTPException(status_code=404, detail="工作区不存在")
+    # 清理该工作区的文件目录
+    import shutil
+    ws_file_dir = Path("data/workspace_files") / ws_id
+    if ws_file_dir.exists():
+        shutil.rmtree(ws_file_dir, ignore_errors=True)
+    return {"success": True}
+
+
+# 工作区文档管理
+@app.get("/api/workspaces/{ws_id}/documents")
+async def list_workspace_documents(ws_id: str):
+    if await workspace_store.get_workspace(ws_id) is None:
+        raise HTTPException(status_code=404, detail="工作区不存在")
+    docs = await workspace_store.list_documents(ws_id)
+    return {"documents": docs}
+
+
+@app.post("/api/workspaces/{ws_id}/documents")
+async def upload_workspace_document(ws_id: str, file: UploadFile = File(...)):
+    if await workspace_store.get_workspace(ws_id) is None:
+        raise HTTPException(status_code=404, detail="工作区不存在")
+
+    # 存到 data/workspace_files/{ws_id}/documents/
+    doc_dir = Path("data/workspace_files") / ws_id / "documents"
+    doc_dir.mkdir(parents=True, exist_ok=True)
+    doc_id = str(_uuid.uuid4())
+    safe_name = sanitize_filename(file.filename or doc_id)
+    file_path = doc_dir / f"{doc_id}_{safe_name}"
+    content = await file.read()
+    file_path.write_bytes(content)
+
+    doc = await workspace_store.add_document(
+        doc_id, ws_id, file.filename, str(file_path), len(content)
+    )
+    return {"success": True, "document": doc}
+
+
+@app.delete("/api/workspaces/{ws_id}/documents/{doc_id}")
+async def delete_workspace_document(ws_id: str, doc_id: str):
+    file_path = await workspace_store.delete_document(doc_id)
+    if file_path is None:
+        raise HTTPException(status_code=404, detail="文档不存在")
+    # 删实际文件
+    try:
+        Path(file_path).unlink(missing_ok=True)
+    except Exception:
+        pass
+    return {"success": True}
 
 
 def _load_mcp_servers_from_config():

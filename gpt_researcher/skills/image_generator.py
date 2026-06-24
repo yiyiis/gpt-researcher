@@ -11,7 +11,11 @@ import re
 from typing import Any, Dict, List, Optional, Tuple
 
 from ..actions.utils import stream_output
-from ..llm_provider.image import ImageGeneratorProvider, ModelsLabImageGeneratorProvider
+from ..llm_provider.image import (
+    ImageGeneratorProvider,
+    ModelsLabImageGeneratorProvider,
+    MinimaxImageGeneratorProvider,
+)
 from ..utils.llm import create_chat_completion
 
 logger = logging.getLogger(__name__)
@@ -55,6 +59,8 @@ class ImageGenerator:
             model = getattr(self.cfg, 'IMAGE_GENERATION_MODEL', None)
             if provider_name == 'modelslab':
                 provider = ModelsLabImageGeneratorProvider(model_id=model)
+            elif provider_name == 'minimax':
+                provider = MinimaxImageGeneratorProvider(model_name=model)
             else:
                 provider = ImageGeneratorProvider(model_name=model)
             if provider.is_available():

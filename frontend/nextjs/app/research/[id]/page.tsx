@@ -34,7 +34,8 @@ export default function ResearchPage({ params }: { params: { id: string } }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [chatBoxSettings, setChatBoxSettings] = useState<ChatBoxSettings>(() => {
-    // Default settings
+    // Default settings（config.json 内置服务由 MCPSelector 从 API 动态加载，
+    // mcp_configs 仅存放用户在前端添加的自定义服务）
     const defaultSettings = {
       report_source: "web",
       report_type: "research_report",
@@ -287,6 +288,15 @@ export default function ResearchPage({ params }: { params: { id: string } }) {
           text: data.output,
           metadata: data.metadata,
           key: `${data.type}-${data.content}`,
+        }];
+      }
+      // Process MCP retriever logs (智谱等 MCP 工具的使用情况)
+      else if (data.content === 'mcp_retriever') {
+        return [...acc, {
+          header: 'mcp',
+          text: data.output,
+          metadata: data.metadata,
+          key: `${data.type}-${data.content}-${acc.length}`,
         }];
       }
       return acc;

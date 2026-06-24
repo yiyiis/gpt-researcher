@@ -22,6 +22,9 @@ gpt_researcher.egg-info/
 #Ignore my local docs
 my-docs/
 
+#Ignore workspace runtime data (SQLite db, migrated reports, uploaded files)
+data/
+
 #Ignore pycache
 **/__pycache__/
 
