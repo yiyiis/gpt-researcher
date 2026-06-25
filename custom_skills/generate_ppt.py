@@ -67,7 +67,7 @@ async def _generate_slides_html(title: str, content: str, style: str = "magazine
 - 不要 "Here is the presentation" 这种说明文字
 
 报告内容：
-{content[:6000]}
+{content}
 """
 
     response = await create_chat_completion(
@@ -76,6 +76,7 @@ async def _generate_slides_html(title: str, content: str, style: str = "magazine
         temperature=0.4,
         llm_provider=cfg.smart_llm_provider,
         llm_kwargs=cfg.llm_kwargs,
+        max_tokens=16000,  # 增加输出 token 限制，确保能生成完整的幻灯片
     )
     return response
 
@@ -164,7 +165,17 @@ async def generate_ppt(title: str, content: str) -> str:
         slide_count = slides_html.count('<section class="slide')
         logger.info(f"[PPT] 生成成功: {filename} ({slide_count} 页)")
 
-        return f"PPT 已生成成功！\n标题: {title}\n页数: {slide_count}\n访问地址: {url}\n文件: {filepath}"
+        # 返回 Markdown 格式，前端会自动转换为可点击链接
+        return f"""## ✅ PPT 已生成成功！
+
+**标题**: {title}
+**页数**: {slide_count} 页
+
+🔗 **访问地址**: [{url}]({url})
+
+📁 **文件路径**: `{filepath}`
+
+点击访问地址即可查看生成的 PPT 演示文稿。"""
 
     except Exception as e:
         logger.error(f"[PPT] 生成失败: {e}", exc_info=True)
