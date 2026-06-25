@@ -272,6 +272,18 @@ You have the following pre-generated images available. Embed them in relevant se
 
 Place each image on its own line after the relevant section header or paragraph. Use all available images where they add value to the content."""
     try:
+        # 指令型 skill 注入：语义匹配相关 skill，按需读取正文作为方法论指导
+        try:
+            from ..skills.skill_discovery import find_relevant_skills, build_skill_guidance
+            relevant_skills = await find_relevant_skills(query, top_k=3, cfg=cfg)
+            if relevant_skills:
+                skill_guidance = build_skill_guidance(relevant_skills)
+                if skill_guidance:
+                    agent_role_prompt = agent_role_prompt + skill_guidance
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).debug(f"skill 注入跳过: {e}")
+
         report = await create_chat_completion(
             model=cfg.smart_llm_model,
             messages=[

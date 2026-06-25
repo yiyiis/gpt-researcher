@@ -143,6 +143,14 @@ async def create_chat_completion(
             )
             cost_callback(llm_costs)
 
+        # 过滤推理模型（如 MiniMax-M3）的思考过程 <think>...</think>
+        # 只保留正式回答，避免思考内容污染报告/聊天/前端显示
+        if response and "<think>" in response:
+            import re as _re
+            cleaned = _re.sub(r"<think>.*?</think>", "", response, flags=_re.DOTALL).strip()
+            if cleaned:
+                response = cleaned
+
         return response
 
     logging.error(f"Failed to get response from {llm_provider} API")

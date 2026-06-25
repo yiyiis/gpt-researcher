@@ -154,11 +154,25 @@ class ChatAgentWithMemory:
         """Process chat completion using configured LLM provider with tool calling support"""
         # Create a search tool using the utility function
         search_tool = create_search_tool(self.quick_search)
-        
+
+        # 加载用户自定义工具型 skill（custom_skills/*.py 的 @tool）
+        # 这样聊天时也能调用 calculate、generate_ppt 等自定义工具
+        custom_tools = []
+        try:
+            from gpt_researcher.skills.custom_loader import load_custom_skills
+            custom_tools = load_custom_skills()
+            if custom_tools:
+                logger.info(f"Chat loaded {len(custom_tools)} custom skills: {[t.name for t in custom_tools]}")
+        except Exception as e:
+            logger.debug(f"No custom skills loaded for chat: {e}")
+
+        # 合并搜索工具 + 自定义 skill
+        all_tools = [search_tool] + custom_tools
+
         # Use the tool-enabled chat completion utility
         response, tool_calls_metadata = await create_chat_completion_with_tools(
             messages=messages,
-            tools=[search_tool],
+            tools=all_tools,
             model=self.config.smart_llm_model,
             llm_provider=self.config.smart_llm_provider,
             llm_kwargs=self.config.llm_kwargs,
@@ -198,24 +212,42 @@ class ChatAgentWithMemory:
             
             # Format system prompt with the report context
             system_prompt = f"""
-            You are GPT Researcher, an autonomous research agent created by an open source community at https://github.com/assafelovic/gpt-researcher, homepage: https://gptr.dev. 
+            You are GPT Researcher, an autonomous research agent created by an open source community at https://github.com/assafelovic/gpt-researcher, homepage: https://gptr.dev.
             To learn more about GPT Researcher you can suggest to check out: https://docs.gptr.dev.
-            
+
             This is a chat about a research report that you created. Answer based on the given context and report.
             You must include citations to your answer based on the report.
-            
-            You may use the quick_search tool when the user asks about information that might require current data 
+
+            You may use the quick_search tool when the user asks about information that might require current data
             not found in the report, such as recent events, updated statistics, or news. If there's no report available,
             you can use the quick_search tool to find information online.
-            
-            You must respond in markdown format. You must make it readable with paragraphs, tables, etc when possible. 
+
+            You must respond in markdown format. You must make it readable with paragraphs, tables, etc when possible.
             Remember that you're answering in a chat not a report.
-            
+
             Assume the current time is: {datetime.now()}.
-            
+
             Report: {self.report}
-            
+
             """
+
+            # 注入指令型 skill 方法论：根据用户最后一条消息语义匹配相关 skill
+            try:
+                from gpt_researcher.skills.skill_discovery import find_relevant_skills, build_skill_guidance
+                last_msg = ""
+                for m in reversed(messages):
+                    if m.get("role") == "user" and m.get("content"):
+                        last_msg = m["content"]
+                        break
+                if last_msg:
+                    relevant = await find_relevant_skills(last_msg, top_k=2, cfg=self.config)
+                    if relevant:
+                        guidance = build_skill_guidance(relevant)
+                        if guidance:
+                            system_prompt += guidance
+                            logger.info(f"Chat injected skills: {relevant}")
+            except Exception as e:
+                logger.debug(f"Chat skill injection skipped: {e}")
             
             # Format message history for OpenAI input
             formatted_messages = []

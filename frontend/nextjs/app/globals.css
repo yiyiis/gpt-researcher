@@ -489,3 +489,147 @@ body::after {
   opacity: 0.4;
   cursor: not-allowed;
 }
+
+/* ===== Skill 管理样式 ===== */
+.ws-skill-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.ws-skill-hint {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.45);
+  background: rgba(13, 148, 136, 0.08);
+  border: 1px solid rgba(13, 148, 136, 0.2);
+  border-radius: 0.4rem;
+  padding: 8px 10px;
+  line-height: 1.5;
+}
+.ws-skill-hint code {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 1px 4px;
+  border-radius: 3px;
+  color: #0cdbb6;
+  font-size: 0.72rem;
+}
+.ws-skill-empty {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.82rem;
+  text-align: center;
+  padding: 20px 8px;
+  line-height: 1.6;
+}
+.ws-skill-empty code {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 1px 4px;
+  border-radius: 3px;
+  color: #0cdbb6;
+  font-size: 0.78rem;
+}
+.ws-skill-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.ws-skill-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-left: 3px solid rgba(251, 191, 36, 0.5);
+  border-radius: 0.4rem;
+  transition: border-color 0.2s ease;
+}
+.ws-skill-item:hover {
+  border-left-color: #fbbf24;
+}
+.ws-skill-info {
+  flex: 1;
+  min-width: 0;
+}
+.ws-skill-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-family: ui-monospace, monospace;
+}
+.ws-skill-icon {
+  color: #fbbf24;
+  font-size: 0.75rem;
+}
+.ws-skill-desc {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 4px 0 0 0;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ws-skill-file {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.35);
+  font-family: ui-monospace, monospace;
+  margin-top: 3px;
+}
+.ws-skill-delete {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.3);
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 0.25rem;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+.ws-skill-delete:hover {
+  color: #f87171;
+  background: rgba(248, 113, 113, 0.1);
+}
+
+/* Skill 分类标题 */
+.ws-skill-section-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 6px;
+}
+.ws-skill-section-desc {
+  font-weight: 400;
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.35);
+  margin-left: auto;
+}
+/* 指令型 skill：青色左边框 */
+.ws-skill-item.instruction {
+  border-left-color: #0d9488;
+}
+.ws-skill-item.instruction .ws-skill-icon {
+  color: #0d9488;
+}
+.ws-skill-item.instruction:hover {
+  border-left-color: #0cdbb6;
+}
+/* 工具型 skill：琥珀色左边框 */
+.ws-skill-item.tool {
+  border-left-color: rgba(251, 191, 36, 0.5);
+}
+.ws-skill-item.tool .ws-skill-icon {
+  color: #fbbf24;
+}
+.ws-skill-item.tool:hover {
+  border-left-color: #fbbf24;
+}

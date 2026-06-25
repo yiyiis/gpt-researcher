@@ -137,19 +137,34 @@ class MCPRetriever:
             # Stage 1: Get all available tools
             await self.streamer.stream_stage_start("Stage 1", "Getting all available MCP tools")
             all_tools = await self._get_all_tools()
-            
+
+            # 合并用户自定义 skill（custom_skills/ 目录下的 @tool 工具）
+            # custom skill 与 MCP 工具一起参与 LLM 智能选择，研究时由 LLM 自主决定是否调用
+            try:
+                from ...skills.custom_loader import load_custom_skills
+                custom_tools = load_custom_skills()
+                if custom_tools:
+                    all_tools = (all_tools or []) + custom_tools
+                    await self.streamer.stream_log(
+                        f"Added {len(custom_tools)} custom skill(s): {[t.name for t in custom_tools]}"
+                    )
+            except Exception as e:
+                logger.warning(f"Failed to load custom skills: {e}")
+
             if not all_tools:
                 await self.streamer.stream_warning("No MCP tools available, skipping MCP research")
                 return []
-            
+
             # Stage 2: Select most relevant tools
             await self.streamer.stream_stage_start("Stage 2", "Selecting most relevant tools")
-            selected_tools = await self.tool_selector.select_relevant_tools(self.query, all_tools, max_tools=3)
-            
+            # 有 custom skill 时调大上限，确保 skill 有机会被选中
+            max_select = 5 if len(all_tools) > 3 else 3
+            selected_tools = await self.tool_selector.select_relevant_tools(self.query, all_tools, max_tools=max_select)
+
             if not selected_tools:
                 await self.streamer.stream_warning("No relevant tools selected, skipping MCP research")
                 return []
-            
+
             # Stage 3: Conduct research with selected tools
             await self.streamer.stream_stage_start("Stage 3", "Conducting research with selected tools")
             results = await self.mcp_researcher.conduct_research_with_tools(self.query, selected_tools)

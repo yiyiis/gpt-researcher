@@ -28,6 +28,7 @@ DEFAULT_CONFIG: BaseConfig = {
     "LANGUAGE": "english",
     "REPORT_SOURCE": "web",
     "DOC_PATH": "./my-docs",
+    "SKILLS_DIR": "skills",  # 指令型 skill 目录（每个子目录含 SKILL.md），可指向 superpowers/skills/
     "PROMPT_FAMILY": "default",
     "LLM_KWARGS": {},
     "EMBEDDING_KWARGS": {},

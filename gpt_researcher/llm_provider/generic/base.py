@@ -329,6 +329,10 @@ class GenericLLMProvider:
         self._reset_last_response_metadata()
         paragraph = ""
         response = ""
+        # 过滤推理模型（如 MiniMax-M3）的 <think>...</think> 思考过程
+        # 在 thinking 块内时不发送给前端，只累积到 response（供内部使用）
+        in_thinking = False
+        think_buffer = ""
 
         # Streaming the response using the chain astream method from langchain
         async for chunk in self.llm.astream(messages, **kwargs):
@@ -337,6 +341,37 @@ class GenericLLMProvider:
             if not content:
                 continue
             response += content
+
+            # —— thinking 过滤（处理跨块的 <think> 标签）——
+            if in_thinking:
+                think_buffer += content
+                if "</think>" in think_buffer:
+                    # 思考结束，取 </think> 之后的内容
+                    after = think_buffer.split("</think>", 1)[1]
+                    in_thinking = False
+                    think_buffer = ""
+                    content = after
+                    if not content:
+                        continue
+                else:
+                    continue  # 还在思考中，不发送
+            else:
+                if "<think>" in content:
+                    before, _, after = content.partition("<think>")
+                    in_thinking = True
+                    think_buffer = after  # <think> 之后的内容先缓冲（可能含 </think>）
+                    # 发送 <think> 之前的正常内容
+                    if before.strip():
+                        paragraph += before
+                        if "\n" in paragraph:
+                            await self._send_output(paragraph, websocket)
+                            paragraph = ""
+                    continue
+                # 检测跨块的不完整 <think 标签
+                if content.rstrip().endswith("<") or content.rstrip().endswith("<t") or content.rstrip().endswith("<th") or content.rstrip().endswith("<thi") or content.rstrip().endswith("<thin") or content.rstrip().endswith("<think"):
+                    # 简化处理：单个 < 或部分标签当作正常内容（极少见）
+                    pass
+
             paragraph += content
             if "\n" in paragraph:
                 await self._send_output(paragraph, websocket)

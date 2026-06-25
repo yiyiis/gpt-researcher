@@ -544,6 +544,92 @@ async def delete_workspace(ws_id: str):
     return {"success": True}
 
 
+# Skills（指令型 + 工具型）
+@app.get("/api/skills")
+async def list_skills():
+    """返回所有 skill。
+    - instruction_skills: 指令型（skills/<dir>/SKILL.md），研究时注入方法论
+    - tool_skills: 工具型（custom_skills/*.py @tool），研究时 LLM 可调用
+    """
+    result = {"instruction_skills": [], "tool_skills": [], "count": 0}
+    try:
+        # 指令型 skill
+        from gpt_researcher.skills.skill_discovery import list_skills_info
+        result["instruction_skills"] = list_skills_info()
+    except Exception as e:
+        logger.error(f"Error listing instruction skills: {e}")
+
+    try:
+        # 工具型 skill
+        from gpt_researcher.skills.custom_loader import list_custom_skills_info as _list_tools
+        result["tool_skills"] = _list_tools()
+    except Exception as e:
+        logger.error(f"Error listing tool skills: {e}")
+
+    result["count"] = len(result["instruction_skills"]) + len(result["tool_skills"])
+    return result
+
+
+@app.delete("/api/skills")
+async def delete_skill(request: Request):
+    """删除一个 skill。
+    查询参数：
+    - name=skill_name + type=instruction：删除指令型 skill 目录
+    - name=skill_name + type=tool：删除工具型 skill 文件
+    - file=xxx.py：删除工具型 skill 文件（兼容旧参数）
+    """
+    params = request.query_params
+    skill_name = params.get("name")
+    skill_type = params.get("type", "instruction")
+    target_file = params.get("file")
+
+    # 工具型 skill（删文件）
+    if skill_type == "tool" or target_file or (skill_name and target_file is None and skill_type == "tool"):
+        from gpt_researcher.skills.custom_loader import _get_skills_dir, list_custom_skills_info
+        skills_dir = _get_skills_dir()
+
+        if not target_file and skill_name:
+            for s in list_custom_skills_info():
+                if s["name"] == skill_name:
+                    target_file = s.get("file")
+                    break
+        if not target_file:
+            raise HTTPException(status_code=400, detail="需要提供 file 或 name 参数")
+        if not target_file.endswith(".py"):
+            raise HTTPException(status_code=400, detail="工具型 skill 只能删除 .py 文件")
+        file_path = (skills_dir / target_file).resolve()
+        if not str(file_path).startswith(str(skills_dir.resolve())):
+            raise HTTPException(status_code=400, detail="非法的文件路径")
+        if file_path.name == "__init__.py":
+            raise HTTPException(status_code=400, detail="不能删除 __init__.py")
+        if not file_path.exists():
+            raise HTTPException(status_code=404, detail="skill 文件不存在")
+        file_path.unlink()
+        pycache = skills_dir / "__pycache__"
+        if pycache.exists():
+            for c in pycache.glob(f"{file_path.stem}*.pyc"):
+                c.unlink(missing_ok=True)
+        logger.info(f"Deleted tool skill: {target_file}")
+        return {"success": True, "deleted": target_file}
+
+    # 指令型 skill（删目录）
+    if not skill_name:
+        raise HTTPException(status_code=400, detail="需要提供 name 参数")
+    from gpt_researcher.skills.skill_discovery import delete_skill as _delete_instruction_skill
+    deleted = _delete_instruction_skill(skill_name)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="指令型 skill 不存在或不在可删范围")
+    return {"success": True, "deleted": skill_name}
+    # 清理可能残留的 __pycache__
+    pycache = skills_dir / "__pycache__"
+    if pycache.exists():
+        for cached in pycache.glob(f"{file_path.stem}*.pyc"):
+            cached.unlink(missing_ok=True)
+
+    logger.info(f"Deleted skill file: {target_file}")
+    return {"success": True, "deleted": target_file}
+
+
 # 工作区文档管理
 @app.get("/api/workspaces/{ws_id}/documents")
 async def list_workspace_documents(ws_id: str):

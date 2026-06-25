@@ -18,6 +18,15 @@ from .llm import create_chat_completion
 logger = logging.getLogger(__name__)
 
 
+def _strip_thinking(text: str) -> str:
+    """过滤推理模型（如 MiniMax-M3）的 <think>...</think> 思考过程，只保留正式回答。"""
+    if not text or "<think>" not in text:
+        return text
+    import re
+    cleaned = re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL).strip()
+    return cleaned if cleaned else text
+
+
 def _track_response_cost(
     *,
     llm_provider: str | None,
@@ -197,11 +206,11 @@ async def create_chat_completion_with_tools(
                 cost_callback=cost_callback,
             )
              
-            return final_response.content, tool_calls_metadata
-         
+            return _strip_thinking(final_response.content), tool_calls_metadata
+
         else:
             # No tool calls, return regular response
-            return response.content, []
+            return _strip_thinking(response.content), []
         
     except Exception as e:
         error_type = type(e).__name__

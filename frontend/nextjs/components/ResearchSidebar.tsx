@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useWorkspaceContext } from '../hooks/WorkspaceContext';
 import WorkspaceDocs from '../components/Workspace/WorkspaceDocs';
 import WorkspaceSettings from '../components/Workspace/WorkspaceSettings';
+import SkillManager from '../components/Workspace/SkillManager';
 
 interface ResearchSidebarProps {
   history: ResearchHistoryItem[];
@@ -38,7 +39,7 @@ const ResearchSidebar: React.FC<ResearchSidebarProps> = ({
   const [showNewWsModal, setShowNewWsModal] = useState(false);
   const [newWsName, setNewWsName] = useState('');
   const [newWsDesc, setNewWsDesc] = useState('');
-  const [activeTab, setActiveTab] = useState<'reports' | 'docs'>('reports');
+  const [activeTab, setActiveTab] = useState<'reports' | 'docs' | 'skills'>('reports');
   const [showWsSettings, setShowWsSettings] = useState(false);
 
   // 按当前工作区过滤报告（兼容无 workspaceId 的旧数据，归入 default）
@@ -224,7 +225,7 @@ const ResearchSidebar: React.FC<ResearchSidebarProps> = ({
                     ))}
                   </select>
 
-                  {/* Tab 切换：研究报告 / 文档 */}
+                  {/* Tab 切换：研究报告 / 文档 / Skills */}
                   <div className="ws-tabs mt-3">
                     <button
                       className={`ws-tab ${activeTab === 'reports' ? 'active' : ''}`}
@@ -239,6 +240,13 @@ const ResearchSidebar: React.FC<ResearchSidebarProps> = ({
                     >
                       <i className="fas fa-folder-open" style={{ marginRight: 4 }} />
                       文档
+                    </button>
+                    <button
+                      className={`ws-tab ${activeTab === 'skills' ? 'active' : ''}`}
+                      onClick={() => setActiveTab('skills')}
+                    >
+                      <i className="fas fa-bolt" style={{ marginRight: 4 }} />
+                      Skills
                     </button>
                   </div>
                 </div>
@@ -273,6 +281,13 @@ const ResearchSidebar: React.FC<ResearchSidebarProps> = ({
                 {activeTab === 'docs' && (
                   <div className="overflow-y-auto h-[calc(100vh-220px)] sm:h-[calc(100vh-260px)] pr-1 custom-scrollbar">
                     <WorkspaceDocs />
+                  </div>
+                )}
+
+                {/* Skills tab */}
+                {activeTab === 'skills' && (
+                  <div className="overflow-y-auto h-[calc(100vh-220px)] sm:h-[calc(100vh-260px)] pr-1 custom-scrollbar">
+                    <SkillManager />
                   </div>
                 )}
 
